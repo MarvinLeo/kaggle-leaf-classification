@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
@@ -32,21 +32,25 @@ def get_train_data(df, df1):
 
 
 def reduce_dimension(train, test):
-    n_train = train.shape[0]
-    n_test = test.shape[0]
-    data = np.concatenate((train, test))
-    pca = PCA()
-    pca.fit(data)
-    score = 0
-    scores = pca.explained_variance_ratio_
-    num = 0
-    for variance in scores:
-        score += variance
-        num += 1
-        if score > 0.99:
-            break
-    reduce_data = PCA(n_components=num).fit_transform(data)
-    return reduce_data[:n_train, ], reduce_data[n_train:, ]
+    # n_train = train.shape[0]
+    # n_test = test.shape[0]
+    # data = np.concatenate((train, test))
+    # pca = PCA()
+    # pca.fit(data)
+    # score = 0
+    # scores = pca.explained_variance_ratio_
+    # num = 0
+    # for variance in scores:
+    #     score += variance
+    #     num += 1
+    #     if score > 0.99:
+    #         break
+    # reduce_data = PCA(n_components=num).fit_transform(data)
+    # return reduce_data[:n_train, ], reduce_data[n_train:, ]
+    scaler = StandardScaler().fit(train)
+    train = scaler.transform(train)
+    test = scaler.transform(test)
+    return train, test
 
 
 label, colnames = label(train_data['species'])
@@ -84,9 +88,9 @@ print scores, scores.mean()
 eclf = VotingClassifier(estimators=[('SVM', clf),
                                     ('rf', clf2),
                                     ('KNN', clf1),
-                                    ('ld', clf3),
+                                    #('ld', clf3),
                                     ('lgr', clf4)],
-                                    voting='soft')
+                                    voting='hard')
 scores = cross_val_score(eclf, reduce_x, label)
 print scores, scores.mean()
 params = {'rf__n_estimators':[20, 200], 'KNN__n_neighbors': [2,5], 'lgr__C':[100, 1000], 'lgr__tol': [0.001, 0.0001]}
